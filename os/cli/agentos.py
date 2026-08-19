@@ -17,6 +17,10 @@ Commands:
                                  reviewer CONCLUDED, not just that they looked
   new <slug>                     scaffold a registry card from _template.md
 
+  query "question"               ranked retrieval over wiki/ — BM25 + tag boost +
+                                 [[wiki-link]] graph expansion, cited by page
+  search "text"                  fast title/substring search over wiki/
+
   agents                         every known seat + is its CLI actually installed
                                  (add agents via os/agents.d/*.json — no code)
   tools                          the Connections layer (NESTED family): which
@@ -58,6 +62,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dockyard as dy                                       # noqa: E402
+import librarian as lib                                     # noqa: E402
 import drivers as drv                                       # noqa: E402
 import orchestrator as orc                                  # noqa: E402
 import settings as st                                       # noqa: E402
@@ -381,6 +386,18 @@ def cmd_agents(root: Path):
           + " is never auto-driven — name it explicitly.")
 
 
+
+# ---------------------------------------------------------------- librarian
+
+def cmd_query(root: Path, question: str, kind: str, k: int):
+    lib.set_root(root)
+    print(lib.wiki_query(question, kind, k))
+
+
+def cmd_search(root: Path, query: str, kind: str):
+    lib.set_root(root)
+    print(lib.wiki_search(query, kind))
+
 # -------------------------------------------------------------------- tools
 # The Connections layer's command surface (map ticket 02). `agents` answers
 # "is the binary there"; `tools` answers "is it switched ON, and what do we
@@ -637,6 +654,14 @@ def main():
     p.add_argument("--verdict", choices=list(orc.REVIEW_VERDICTS), default=None,
                    help="what you concluded (omit for 'looked, didn't say')")
     p = sub.add_parser("new"); p.add_argument("slug")
+
+    p = sub.add_parser("query", help="ranked retrieval over wiki/ (BM25 + graph)")
+    p.add_argument("question", nargs="+")
+    p.add_argument("--kind", default="", help="restrict to a page type")
+    p.add_argument("-k", type=int, default=6, help="how many pages to return")
+    p = sub.add_parser("search", help="fast substring/title search over wiki/")
+    p.add_argument("query", nargs="+")
+    p.add_argument("--kind", default="")
     sub.add_parser("dock")
     p = sub.add_parser("extract")
     p.add_argument("file"); p.add_argument("--password", default=""); p.add_argument("--out")
@@ -708,6 +733,10 @@ def main():
         cmd_review(root, args.run_id, args.note, args.verdict)
     elif args.cmd == "new":
         cmd_new(root, args.slug)
+    elif args.cmd == "query":
+        cmd_query(root, " ".join(args.question), args.kind, args.k)
+    elif args.cmd == "search":
+        cmd_search(root, " ".join(args.query), args.kind)
     elif args.cmd == "dock":
         cmd_dock(root)
     elif args.cmd == "extract":

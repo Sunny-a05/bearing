@@ -6,7 +6,8 @@ map, then researches the market into that map until the plan is worth acting on.
 
 **Every other AI writes your plan in an hour. Bearing makes sure it's the right plan.**
 
-Everything is files on your disk. There is no server, no account, and no API key.
+Everything is files on your disk. There is no server, no account, no API key, and
+nothing to install — the CLI is standard library only.
 
 - **The loop:** `./os/skills/bearing.md` — read this first
 - **Knowledge base:** `./wiki/`
@@ -57,7 +58,6 @@ Any AI agent reading this file should follow these rules.
 ├── README.md             # Human-facing quickstart and install path
 ├── LICENSE               # MIT
 ├── NOTICE                # Third-party notices (forked skills)
-├── .mcp.json             # MCP wiring — points at os/mcp/server.py
 ├── index.md              # Catalog of every wiki page
 ├── log.md                # Chronological log of ingests and edits
 │
@@ -83,8 +83,7 @@ Any AI agent reading this file should follow these rules.
 │   ├── agents.d/         # Drop-in agent definitions (JSON) — new agent, no code
 │   ├── cli/              # The CLI (stdlib; pypdf optional): agentos.py (entry)
 │   │                     #   + orchestrator.py + drivers.py + settings.py
-│   │                     #   + extract.py + dockyard.py
-│   ├── mcp/              # MCP server over stdio — how your agent reaches the wiki
+│   │                     #   + extract.py + dockyard.py + librarian.py
 │   └── ui/               # Local management UI (Next.js, localhost:4123)
 │
 ├── raw/                  # Immutable source material, fully ingested

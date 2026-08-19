@@ -1,75 +1,34 @@
 #!/usr/bin/env python3
-"""wiki-os — MCP frontend on the LLM Wiki OS (milestone 1: the wiki layer).
+"""librarian.py — ranked retrieval over wiki/. Stdlib only.
 
-A DETACHABLE frontend, exactly like os/ui/ and os/cli/: it reads the wiki
-files and exposes them over the Model Context Protocol. It imports nothing
-from the OS core and is imported BY nothing — delete os/mcp/ and the OS loses
-nothing (durability contract, see README.md). The core stays stdlib; this
-frontend's one dependency (the `mcp` SDK) lives only here.
+BM25 over whole pages -> tag-overlap boost -> [[wiki-link]] graph expansion of the
+top hits -> best-matching section returned as the excerpt. The graph expansion is
+the part a plain grep cannot do: your curated links encode relatedness that term
+frequency never sees.
 
-Exposes:
-  RESOURCES (content an agent reads, on demand — cheap, addressable)
-    wiki://index          the catalog (index.md)
-    wiki://state          the cross-session handoff (STATE.md)
-    wiki://page/{slug}     any wiki page by filename slug
-  TOOLS — wiki layer (M1)
-    wiki_search           literal substring / filename lookup
-    wiki_query            ranked retrieval: BM25 + tag boost + [[graph]] expansion,
-                          returns section-level chunks with [[wiki-link]] citations
-  TOOLS — OS control plane (M2, read-only; wraps os/cli/ modules)
-    os_status             registry dashboard + inbox + STATE age
-    os_route              resolve a task to its model chain (no spend)
-    os_runs               the run trail (recent, or a --summary rollup)
-    dock_list             dock inbox + v3 dedup status
-Mutating dock actions stay gated (OS hard rule 4) — this server reads.
-
-Run:   pip install -r os/mcp/requirements.txt  &&  python os/mcp/server.py
-Register: see .mcp.json at the repo root (or `claude mcp add`).
+Ported out of the MCP frontend on 2026-08-19 when that frontend was cut — the
+retrieval was worth keeping, the transport was not. Surface: `agentos.py query`
+and `agentos.py search`.
 """
 from __future__ import annotations
 
-import json
 import math
 import re
-import sys
-import urllib.parse
 from collections import Counter
-from datetime import date, datetime
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
-
-ROOT = Path(__file__).resolve().parent.parent.parent   # os/mcp/server.py -> repo root
+ROOT = Path(__file__).resolve().parents[2]
 WIKI = ROOT / "wiki"
 
-mcp = FastMCP("wiki-os")
 
+def set_root(root: Path) -> None:
+    """Point the librarian at a different repo (the CLI's --root override)."""
+    global ROOT, WIKI
+    ROOT = Path(root).resolve()
+    WIKI = ROOT / "wiki"
+    _CACHE.clear()
+    _CACHE["sig"] = None
 
-# ============================================================ resources
-# Read-only content. The agent pulls these on demand instead of us dumping
-# all 131 pages into context — token economy (CLAUDE.md / OS hard rule 2).
-
-@mcp.resource("wiki://index")
-def res_index() -> str:
-    return _read(ROOT / "index.md")
-
-
-@mcp.resource("wiki://state")
-def res_state() -> str:
-    return _read(ROOT / "STATE.md")
-
-
-@mcp.resource("wiki://page/{slug}")
-def res_page(slug: str) -> str:
-    hits = list(WIKI.glob(f"**/{slug}.md"))
-    if not hits:
-        return f"no wiki page named '{slug}' (try wiki_search or wiki_query)"
-    return _read(hits[0])
-
-
-# ============================================================ retrieval core
-# Pure stdlib. At ~131 pages / ~115k tokens the whole corpus fits in context,
-# so this is a ROUTER (surface the right 2-3 pages), not a vector store.
 
 _TOKEN = re.compile(r"[a-z0-9]+")
 _HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
@@ -216,7 +175,6 @@ def _best_section(slug: str, q: list[str]) -> tuple[str, str]:
 
 # ============================================================ tools
 
-@mcp.tool()
 def wiki_search(query: str, kind: str = "") -> str:
     """Literal lookup: pages whose filename or text contains `query`.
     Optional `kind` filters by frontmatter type (entity|concept|skill|stack|
@@ -233,12 +191,11 @@ def wiki_search(query: str, kind: str = "") -> str:
     return "\n".join(out[:25]) or f"no literal match for '{query}'"
 
 
-@mcp.tool()
 def wiki_query(question: str, kind: str = "", k: int = 6) -> str:
     """Ranked retrieval for a question. Pipeline: BM25 over (title+tags+body)
     -> +tag-overlap boost -> [[wiki-link]] graph expansion of the top hits ->
     best section per page. Returns citations + snippets (NOT full pages) so the
-    agent pulls only what it needs via wiki://page/{slug}. `kind` restricts the
+    agent then opens only the pages it needs. `kind` restricts the
     keyword candidates to one frontmatter type; graph neighbours are unrestricted."""
     docs, idf, avgdl = _ensure_index()
     q = _tok(question)
@@ -276,7 +233,7 @@ def wiki_query(question: str, kind: str = "", k: int = 6) -> str:
         prov = f"  <- linked from [[{via[slug]}]]" if slug in via else ""
         lines.append(f"[[{slug}]] §{head}  ({d['type'] or '?'})  score {score:.1f}{prov}")
         lines.append(f"    {snip}")
-    lines.append("\nRead any full page with the resource  wiki://page/<slug>")
+    lines.append("\nOpen a full page at the path shown beside each hit.")
     return "\n".join(lines)
 
 
@@ -284,98 +241,3 @@ def wiki_query(question: str, kind: str = "", k: int = 6) -> str:
 # The wiki layer (M1) reads files only. This layer wraps the OS control plane by
 # importing the CLI modules from os/cli/ — LAZILY, so M1 never depends on them
 # (same detachability, one level down). They're stdlib-only; we import, never fork.
-
-_CLI = ROOT / "os" / "cli"
-
-
-def _core():
-    if str(_CLI) not in sys.path:
-        sys.path.insert(0, str(_CLI))
-    import dockyard as dy
-    import orchestrator as orc
-    return orc, dy
-
-
-@mcp.tool()
-def os_route(task: str) -> str:
-    """Resolve a task to its model chain under the routing policy
-    (os/orchestration.md). Deterministic — no model call, no spend."""
-    orc, _ = _core()
-    # ROOT explicitly: resolve() reads os/settings.json to drop switched-off
-    # seats, so the MCP frontend must answer from the same connections state
-    # the CLI does (map ticket 03).
-    return orc.resolve(task, root=ROOT).describe()
-
-
-@mcp.tool()
-def os_runs(n: int = 20, summary: bool = False, days: int = 7) -> str:
-    """The run trail (os/runs.jsonl): the last `n` model calls / handoffs /
-    reviews, or a rollup over the last `days` when summary=True."""
-    orc, _ = _core()
-    if summary:
-        return orc.summarize(ROOT, days=days)
-    recs = list(orc.iter_runs(ROOT))
-    if not recs:
-        return "no run records yet — os/runs.jsonl is written on every model call."
-    out = []
-    for r in recs[-n:]:
-        who = r.get("model") or r.get("to") or r.get("of", "?")
-        extra = r.get("outcome") or r.get("note", "")
-        out.append(f"{r.get('ts','?')}  {r.get('kind','?'):<10} "
-                   f"{r.get('task',''):<16} {who:<14} {extra}")
-    return "\n".join(out)
-
-
-@mcp.tool()
-def os_status() -> str:
-    """OS dashboard: registry cards (status/priority/tier), dock inbox count,
-    library size, STATE.md age. Mirrors `agentos.py status` — read-only."""
-    orc, dy = _core()
-    lines = [f"AGENTIC OS STATUS — {date.today().isoformat()}",
-             f"{'project':<20}{'domain':<9}{'status':<8}{'prio':<7}{'tier':<7}updated",
-             "-" * 66]
-    reg = dy.P(ROOT)["registry"]
-    if reg.exists():
-        for card in sorted(p for p in reg.glob("*.md") if not p.name.startswith("_")):
-            fm = _frontmatter_dict(card)
-            lines.append(f"{fm.get('project', card.stem):<20}{fm.get('domain','?'):<9}"
-                         f"{fm.get('status','?'):<8}{fm.get('priority','?'):<7}"
-                         f"{fm.get('default-tier','?'):<7}{fm.get('last_updated','?')}")
-    items = dy.inbox_items(ROOT)
-    lines.append(f"\nDock inbox: {len(items)} item(s) awaiting triage"
-                 + ("  — see dock_list" if items else ""))
-    state = ROOT / "STATE.md"
-    if state.exists():
-        age = (datetime.now() - datetime.fromtimestamp(state.stat().st_mtime)).days
-        lines.append(f"STATE.md last modified: {age} day(s) ago"
-                     + ("  << STALE" if age > 7 else ""))
-    return "\n".join(lines)
-
-
-@mcp.tool()
-def dock_list() -> str:
-    """Dock inbox with v3 dedup status per item (checks raw/ AND library/).
-    Read-only — digesting and filing stay gated CLI/M3 actions, never automated
-    from here (OS hard rule 4: local output never decides)."""
-    _, dy = _core()
-    items = dy.inbox_items(ROOT)
-    if not items:
-        return "Dock inbox is empty."
-    out = [f"{len(items)} item(s) awaiting triage (pipeline: os/dock/DOCK.md):"]
-    for p in sorted(items):
-        drafted = "  [digested]" if dy.draft_sidecar_path(p).exists() else ""
-        out.append(f"  - {p.name}  ({p.stat().st_size:,} bytes){drafted}")
-        dd = dy.dedup_check(p, ROOT)
-        if dd.get("exact_raw"):
-            out.append("      DEDUP: exact match -> already ingested (raw/)")
-        elif dd.get("exact_library"):
-            out.append("      DEDUP: exact match -> archived (library/)")
-        elif dd.get("fuzzy"):
-            out.append(f"      DEDUP: {len(dd['fuzzy'])} fuzzy title match(es) — read before filing")
-        else:
-            out.append("      DEDUP: no match — proceed to digest")
-    return "\n".join(out)
-
-
-if __name__ == "__main__":
-    mcp.run()   # stdio transport — what Claude Code / Cursor / etc. expect locally

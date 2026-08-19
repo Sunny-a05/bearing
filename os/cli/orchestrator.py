@@ -69,7 +69,43 @@ MODELS = {
     "user":            {"tier": "human", "executor": "human", "cost": 9},
 }
 
-LADDER = "ollama -> haiku -> sonnet -> opus/fable -> user"
+# The full ladder this roster CAN express. It is NOT what any given user sees:
+# most people run one agent, not five, so a hardcoded five-vendor ladder is a lie
+# to almost everyone reading it. `ladder_str()` renders only the rungs that are
+# actually reachable on this machine, and always terminates in `user`.
+FULL_LADDER = ["ollama", "haiku", "sonnet", "opus/fable", "user"]
+LADDER = " -> ".join(FULL_LADDER)   # the canonical form, for docs and defaults
+
+
+def ladder_str(root=None) -> str:
+    """The escalation ladder as it actually stands on THIS machine.
+
+    A rung shows only if its connection is installed and switched on. If nothing
+    but the host agent is reachable, the honest ladder is `this agent -> user`:
+    escalation still exists, it just has one rung and then you. The human rung is
+    never filtered — it is not a connection, and it is always the last resort."""
+    try:
+        import drivers as drv
+        import settings as st
+        r = Path(root) if root else DEFAULT_ROOT
+        available = {row["name"] for row in drv.probe(r) if row.get("available")}
+        try:
+            off = {row["name"] for row in st.status_rows(r) if not row.get("enabled", True)}
+        except Exception:                                    # noqa: BLE001
+            off = set()
+        rungs = []
+        for seat in FULL_LADDER:
+            if seat in CONNECTIONLESS_SEATS:
+                rungs.append(seat)
+                continue
+            conn = connection_seat(seat)
+            if conn and conn in available and conn not in off:
+                rungs.append(seat)
+        if len(rungs) == 1:                    # only the human rung survived
+            return "this agent -> user"
+        return " -> ".join(rungs)
+    except Exception:                                        # noqa: BLE001
+        return LADDER
 LOCAL_LADDER = [OLLAMA_FIRST_PASS, OLLAMA_ESCALATION]
 
 # Which driver reaches which roster seat (drivers.py resolves the alias to
@@ -337,7 +373,7 @@ class Route:
         if self.never:
             lines.append(f"never:      {', '.join(self.never)}  (enforced — "
                          "run() refuses these, including a --model override)")
-        lines.append(f"ladder:     {LADDER}")
+        lines.append(f"ladder:     {ladder_str()}")
         if not self.chain:
             return "\n".join(lines)
         first = MODELS.get(self.chain[0], {})
@@ -872,5 +908,5 @@ def run(task, prompt, root: Path = None, item: str = "", validate=None,
             result.payload = attempt["payload"]
             return result
     result.notes.append("chain exhausted with no usable output — escalate by hand "
-                        f"per os/orchestration.md (ladder: {LADDER})")
+                        f"per os/orchestration.md (ladder: {ladder_str(root)})")
     return result

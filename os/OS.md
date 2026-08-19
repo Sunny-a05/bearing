@@ -21,7 +21,8 @@ source of truth, and deleting either loses nothing.
 | **Orchestration** | `os/cli/orchestrator.py` | Which model does a piece of work, what it cost, what happened — spec in `os/orchestration.md` |
 | **Registry** | `os/registry/` | One status card per active work item |
 | **Connections** | `os/cli/settings.py` | Which model seats are switched on, and what we know about them |
-| **Frontends** | `os/mcp/`, `os/ui/` | Detachable: an MCP server for your agent, a local web UI for you |
+| **Retrieval** | `os/cli/librarian.py` | Ranked search over `wiki/` — BM25 + tag boost + wiki-link graph expansion. Surface: `agentos.py query` |
+| **Frontend** | `os/ui/` | Detachable local web UI. Delete it and the OS loses nothing |
 
 ## Boot protocol
 

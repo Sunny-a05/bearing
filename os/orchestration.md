@@ -24,7 +24,21 @@ Seats are named capabilities, not products. A seat is reachable only if its
 | `opus`, `fable` | scarce | Architecture, long reasoning — asked for, not fallen into |
 | `user` | human | The terminal rung. You. |
 
-**The ladder:** `ollama -> haiku -> sonnet -> opus/fable -> user`.
+**The ladder is derived, not fixed.** `orchestrator.ladder_str()` renders only the
+rungs actually reachable on this machine — a seat shows up if its connection is
+installed *and* switched on — and it always terminates in `user`. So the ladder reads
+differently for different people, truthfully:
+
+| What you have | The ladder you see |
+|---|---|
+| Ollama + Claude Code | `ollama -> haiku -> sonnet -> opus/fable -> user` |
+| Claude Code only | `haiku -> sonnet -> opus/fable -> user` |
+| Ollama only | `ollama -> user` |
+| Neither — just the agent you are in | `this agent -> user` |
+
+The last row is the common case and it is not a degraded one: escalation still exists,
+it just has one rung and then you. **The human rung is never filtered** — a person is
+not a connection, and is always the last resort.
 
 Escalation walks up it. It never skips to the top because the bottom was
 inconvenient, and it **raises rather than substituting** when every seat in a chain is

@@ -36,7 +36,8 @@ instead of being compressed out of a chat log.
 
 ## Install
 
-Requires **Python 3.10+**. Node 18+ only if you want the optional local UI.
+Requires **Python 3.10+**. Nothing to `pip install` — the whole thing is standard
+library. Node 18+ only if you want the optional local UI.
 
 **1. Clone it.**
 
@@ -44,30 +45,28 @@ Requires **Python 3.10+**. Node 18+ only if you want the optional local UI.
 git clone https://github.com/<your-account>/bearing.git
 ```
 
-**2. Install the MCP server's one dependency.**
+**2. Open it in your agent.**
+
+Whatever you already use — Claude Code, Codex, Cursor, Gemini CLI, or a chat window
+you paste into. Bearing is a folder of markdown plus a stdlib CLI; there is no
+connector to configure and no server to run.
 
 ```bash
-pip install -r os/mcp/requirements.txt
+cd bearing && claude
 ```
 
-**3. Connect your agent.**
+Your agent reads `CLAUDE.md` (or `AGENTS.md`) on the way in and picks up the loop from
+`os/skills/bearing.md`.
 
-The repo ships a `.mcp.json` that points at the bundled server with a relative path,
-so a client launched from the repo root picks it up with no editing.
-
-- **Claude Code** — start it from inside the repo. It reads `.mcp.json` on launch.
-- **Claude Desktop / other MCP clients** — add a server whose command is
-  `python` and whose argument is the absolute path to `os/mcp/server.py`.
-
-Confirm it worked:
+**3. Check it can see itself.**
 
 ```bash
 python os/cli/agentos.py status
 ```
 
-**4. Ask your first question.** Open your agent in the repo and describe something
-you are trying to plan — a venture, a product, a decision you are stuck on. Bearing
-will notice it is plan-shaped and offer to grill you. Say yes.
+**4. Describe something you are trying to plan** — a venture, a product, a decision
+you are stuck on. Bearing will notice it is plan-shaped and offer to grill you. Say
+yes.
 
 ### Optional — the local UI
 
@@ -99,7 +98,8 @@ Nothing breaks either way.
 | `os/dock/DOCK.md` | How incoming material becomes knowledge |
 | `wiki/` | Your knowledge base. Ships empty — it is yours, not ours |
 | `raw/` · `library/` | Ingested sources · the archive that is never deleted |
-| `os/cli/agentos.py` | The CLI. Standard library only |
+| `os/cli/agentos.py` | The CLI. Standard library only — `status`, `query`, `dock`, `digest`, `file` |
+| `os/cli/librarian.py` | Ranked retrieval over your wiki: `agentos.py query "..."` |
 | `CLAUDE.md` / `AGENTS.md` | The schema every agent boots from |
 
 ---
@@ -125,6 +125,6 @@ skills from [mattpocock/skills](https://github.com/mattpocock/skills). The upstr
 copyright notice travels with them in [NOTICE](./NOTICE), as that licence requires.
 Bearing's copies are edited on purpose and are not synced upstream.
 
-Built by Khan as student work at **Harbour.Space Institute of Technology** and the
+Built by Sun Potirangsee as student work at **Harbour.Space Institute of Technology** and the
 **University of the Thai Chamber of Commerce (UTCC)**, under the double-diploma
 programme.
