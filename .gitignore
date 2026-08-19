@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+node_modules/
+.next/
+tsconfig.tsbuildinfo
+.env
+.env.local
+os/settings.json
+os/sessions.json
+os/runs.jsonl
+os/sessions/

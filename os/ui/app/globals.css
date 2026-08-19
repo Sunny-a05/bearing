@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Claude-desktop-inspired warm dark theme. One place to retheme. */
+:root {
+  --bg: #262624;
+  --bg-deep: #1f1e1c;
+  --panel-rgb: 48 48 46;       /* #30302e */
+  --elev: #3a3936;
+  --line: rgba(255, 255, 255, 0.08);
+  --ink: #f2f0e9;
+  --muted: #b5b1a4;
+  --faint: #7d796f;
+  --accent-rgb: 217 119 87;    /* #d97757 */
+  --accent-soft: rgba(217, 119, 87, 0.16);
+  --ok-rgb: 143 191 127;       /* #8fbf7f */
+  --warn-rgb: 224 175 104;     /* #e0af68 */
+  --err-rgb: 226 109 92;       /* #e26d5c */
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  height: 100%;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--elev) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--elev); border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+.card {
+  @apply rounded-xl border border-line bg-panel;
+}
+.btn {
+  @apply inline-flex items-center gap-1.5 rounded-lg border border-line bg-elev px-3 py-1.5 text-sm text-ink transition-colors hover:border-accent/50 hover:bg-accent-soft disabled:opacity-40 disabled:pointer-events-none;
+}
+.btn-accent {
+  @apply border-accent/40 bg-accent-soft text-accent hover:bg-accent hover:text-deep;
+}
+.input {
+  @apply rounded-lg border border-line bg-deep px-3 py-1.5 text-sm text-ink outline-none placeholder:text-faint focus:border-accent/60;
+}
+.chip {
+  @apply inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium;
+}
+.console {
+  @apply whitespace-pre-wrap rounded-lg border border-line bg-deep p-3 font-mono text-xs leading-relaxed text-muted;
+}
+
+/* --- markdown preview (lib/md.ts output) --- */
+.md { @apply text-sm leading-relaxed text-ink; }
+.md h1 { @apply mb-3 mt-1 text-xl font-semibold; }
+.md h2 { @apply mb-2 mt-5 border-b border-line pb-1 text-base font-semibold text-accent; }
+.md h3 { @apply mb-1.5 mt-4 text-sm font-semibold; }
+.md h4 { @apply mb-1 mt-3 text-sm font-medium text-muted; }
+.md p { @apply mb-2.5 text-muted; }
+.md ul { @apply mb-3 ml-4 list-disc space-y-1 text-muted marker:text-faint; }
+.md li strong, .md p strong { @apply text-ink; }
+.md code { @apply rounded bg-deep px-1 py-0.5 font-mono text-[12px] text-warn; }
+.md pre { @apply mb-3 overflow-x-auto rounded-lg border border-line bg-deep p-3; }
+.md pre code { @apply bg-transparent p-0 text-muted; }
+.md blockquote { @apply mb-3 border-l-2 border-accent/60 pl-3 italic text-muted; }
+.md table { @apply mb-3 w-full border-collapse overflow-hidden rounded-lg text-xs; }
+.md td { @apply border border-line px-2 py-1.5 text-muted; }
+.md tr:first-child td { @apply bg-elev font-semibold text-ink; }
+.md hr { @apply my-4 border-line; }
+.md a { @apply text-accent underline decoration-accent/40 underline-offset-2; }
+.md .wikilink { @apply text-accent; }
+.md .fm { @apply mb-4 flex flex-wrap gap-1.5; }
+.md .fm-chip { @apply rounded-md bg-deep px-2 py-1 text-[11px] text-faint; }
+.md .fm-chip b { @apply mr-1 font-semibold text-muted; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.25s ease both; }

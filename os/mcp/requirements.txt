@@ -1,0 +1,3 @@
+# Only dependency of the MCP frontend. The OS core stays stdlib-only;
+# this lives here so `os/mcp/` can be deleted without touching the core.
+mcp[cli]>=1.2.0

@@ -1,0 +1,10 @@
+{
+  "name": "ollama",
+  "models": {
+    "first_pass": "qwen3.5:0.8b",
+    "escalation": "gemma4:e2b",
+    "default": "qwen3.5:0.8b",
+    "_alternatives": "gemma3:1b-it-qat (1.0GB, quick), gemma4:latest (9.6GB, best local)"
+  },
+  "notes": "tags verified against `ollama list` 2026-07-10; edit here, not in drivers.py"
+}

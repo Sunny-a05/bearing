@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "bearing": {
+      "command": "python",
+      "args": ["os/mcp/server.py"]
+    }
+  }
+}
