@@ -39,7 +39,7 @@ function fmFieldLinks(content: string, field: string): string[] {
 }
 
 export const TYPE_COLORS: Record<string, string> = {
-  entity: "#d97757",
+  entity: "#d4a853",
   concept: "#7aa2f7",
   skill: "#9ece6a",
   prompt: "#bb9af7",
@@ -222,7 +222,7 @@ export default function GraphView() {
       for (const [a, b] of sim.edges) {
         if (!visible(a) || !visible(b)) continue;
         const lit = focus >= 0 && (a === focus || b === focus);
-        ctx.strokeStyle = lit ? "rgba(217,119,87,0.55)" : focus >= 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)";
+        ctx.strokeStyle = lit ? "rgba(212,168,83,0.55)" : focus >= 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)";
         ctx.beginPath();
         ctx.moveTo(sim.x[a], sim.y[a]);
         ctx.lineTo(sim.x[b], sim.y[b]);

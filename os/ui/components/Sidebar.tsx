@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { GearIcon, GearMark } from "./Gear";
 
 const ICONS: Record<string, string> = {
   // minimal inline stroke icons (24x24 path data)
@@ -30,15 +31,14 @@ export default function Sidebar() {
   const path = usePathname();
   return (
     <aside className="flex h-screen w-[212px] shrink-0 flex-col border-r border-line bg-deep">
-      <div className="flex items-center gap-2.5 px-4 pb-4 pt-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-deep">
-          OS
-        </div>
+      <div className="group flex items-center gap-2.5 px-4 pb-3 pt-5">
+        <GearMark size={34} />
         <div>
           <div className="text-sm font-semibold leading-tight">Bearing</div>
-          <div className="text-[11px] text-faint">Bearing</div>
+          <div className="text-[11px] text-faint">grill · chart · research</div>
         </div>
       </div>
+      <div className="gear-edge mx-4 mb-4" />
       <nav className="flex flex-col gap-0.5 px-2">
         {NAV.map((n) => {
           const active = path === n.href || (n.href !== "/" && path.startsWith(n.href));
@@ -54,6 +54,7 @@ export default function Sidebar() {
                 <path d={ICONS[n.icon]} />
               </svg>
               {n.label}
+              {active && <GearIcon size={11} fast className="ml-auto text-accent" />}
             </Link>
           );
         })}

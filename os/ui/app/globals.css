@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Claude-desktop-inspired warm dark theme. One place to retheme. */
+/* Warm dark theme, brass/gold accent — bearing-gear gimmick. One place to retheme. */
 :root {
   --bg: #262624;
   --bg-deep: #1f1e1c;
@@ -12,8 +12,8 @@
   --ink: #f2f0e9;
   --muted: #b5b1a4;
   --faint: #7d796f;
-  --accent-rgb: 217 119 87;    /* #d97757 */
-  --accent-soft: rgba(217, 119, 87, 0.16);
+  --accent-rgb: 212 168 83;    /* #d4a853 brass/gold */
+  --accent-soft: rgba(212, 168, 83, 0.16);
   --ok-rgb: 143 191 127;       /* #8fbf7f */
   --warn-rgb: 224 175 104;     /* #e0af68 */
   --err-rgb: 226 109 92;       /* #e26d5c */
@@ -81,3 +81,28 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-up { animation: fadeUp 0.25s ease both; }
+
+/* --- bearing-gear gimmick: a slow idle spin that catches on hover --- */
+@keyframes gearSpin {
+  to { transform: rotate(360deg); }
+}
+.gear-spin {
+  animation: gearSpin 16s linear infinite;
+  transform-origin: 50% 50%;
+}
+.group:hover .gear-spin {
+  animation-duration: 2.4s;
+}
+.gear-spin-fast {
+  animation: gearSpin 2.4s linear infinite;
+  transform-origin: 50% 50%;
+}
+/* a toothed strip standing in for a full gear-tooth border */
+.gear-edge {
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(var(--accent-rgb) / 0.5) 0 5px,
+    transparent 5px 10px
+  );
+}
