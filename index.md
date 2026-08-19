@@ -21,4 +21,7 @@ known, so keep it a map rather than a copy: one line per page, grouped by type.
 
 ## Context
 
+- [[about-me]] — personal setup, background, how you think about plans
+- [[preferences]] — AI agent configuration, communication style, workflow preferences
+
 ## Sources
