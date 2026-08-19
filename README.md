@@ -42,7 +42,7 @@ library. Node 18+ only if you want the optional local UI.
 **1. Clone it.**
 
 ```bash
-git clone https://github.com/<your-account>/bearing.git
+git clone https://github.com/Sunny-a05/bearing.git
 ```
 
 **2. Open it in your agent.**
